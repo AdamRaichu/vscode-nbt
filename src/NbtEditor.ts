@@ -1,5 +1,4 @@
 import { NbtRegion } from 'deepslate'
-import * as path from 'path'
 import * as vscode from 'vscode'
 import type { EditorMessage, Logger, ViewMessage } from './common/types'
 import { disposeAll } from './dispose'
@@ -104,16 +103,14 @@ export class NbtEditorProvider implements vscode.CustomEditorProvider<NbtDocumen
 	}
 
 	private getHtmlForWebview(webview: vscode.Webview, version: string, isStructure: boolean, isRegion: boolean): string {
-		const uri = (...folders: string[]) => webview.asWebviewUri(vscode.Uri.file(
-			path.join(this._context.extensionPath, ...folders)
-		))
+		const uri = (...folders: string[]) => webview.asWebviewUri(
+			vscode.Uri.joinPath(this._context.extensionUri, ...folders)
+		)
 		const scriptUri = uri('out', 'editor.js')
 		const styleUri = uri('res', 'editor.css')
 		const codiconsUri = uri('node_modules', 'vscode-codicons', 'dist', 'codicon.css')
 
-		const mcmetaUri = (id: string) => webview.asWebviewUri(vscode.Uri.file(
-			path.join(mcmetaRoot, `${version}-${id}`)
-		))
+		const mcmetaUri = (id: string) => webview.asWebviewUri(vscode.Uri.file(`${mcmetaRoot}/${version}-${id}`))
 
 		// const blocksUrl = mcmetaUri('blocks')
 		const assetsUrl = mcmetaUri('assets')

@@ -3,6 +3,7 @@
  * MIT License
  * Copyright (c) 2019-2022 SPGoding
  */
+import * as vscode from 'vscode'
 import { http, https } from 'follow-redirects'
 import { promises as fsp } from 'fs'
 import type { IncomingMessage } from 'http'
@@ -19,13 +20,13 @@ export namespace RemoteUriString {
 }
 
 export interface DownloaderDownloadOut {
-	cachePath?: string,
+	cachePath?: vscode.Uri,
 	checksum?: string,
 }
 
 export class Downloader {
 	constructor(
-		private readonly cacheRoot: string,
+		private readonly cacheRoot: vscode.Uri,
 		private readonly logger: Logger,
 		private readonly lld = LowLevelDownloader.create(),
 	) { }
@@ -33,16 +34,16 @@ export class Downloader {
 	async download<R>(job: Job<R>, out: DownloaderDownloadOut = {}): Promise<R | undefined> {
 		const { id, cache, uri, options, transformer } = job
 		let checksum: string | undefined
-		let cachePath: string | undefined
-		let cacheChecksumPath: string | undefined
+		let cachePath: vscode.Uri | undefined
+		let cacheChecksumPath: vscode.Uri | undefined
 		if (cache) {
 			const { checksumJob, checksumExtension } = cache
-			out.cachePath = cachePath = path.join(this.cacheRoot, id)
-			cacheChecksumPath = path.join(this.cacheRoot, id + checksumExtension)
+			out.cachePath = cachePath = vscode.Uri.joinPath(this.cacheRoot, id)
+			cacheChecksumPath = vscode.Uri.joinPath(this.cacheRoot, id + checksumExtension)
 			try {
 				out.checksum = checksum = await this.download({ ...checksumJob, id: id + checksumExtension })
 				try {
-					const cacheChecksum = bufferToString(await fileUtil.readFile(fileUtil.pathToFileUri(cacheChecksumPath)))
+					const cacheChecksum = bufferToString(Buffer.from(await vscode.workspace.fs.readFile(cacheChecksumPath)))
 						.slice(0, -1) // Remove ending newline
 					if (checksum === cacheChecksum) {
 						try {
